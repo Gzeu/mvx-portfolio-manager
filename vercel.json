@@ -1,0 +1,96 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "env": {
+    "NEXT_PUBLIC_MULTIVERSX_NETWORK": "@multiversx-network",
+    "NEXT_PUBLIC_MULTIVERSX_API_URL": "@multiversx-api-url",
+    "NEXT_PUBLIC_MULTIVERSX_GATEWAY_URL": "@multiversx-gateway-url",
+    "NEXT_PUBLIC_MULTIVERSX_EXPLORER_URL": "@multiversx-explorer-url",
+    "NEXT_PUBLIC_MULTIVERSX_CHAIN_ID": "@multiversx-chain-id",
+    "NEXT_PUBLIC_APP_NAME": "@app-name",
+    "NEXT_PUBLIC_APP_URL": "@app-url",
+    "NEXT_PUBLIC_APP_DESCRIPTION": "@app-description",
+    "DATABASE_URL": "@database-url",
+    "NEXTAUTH_SECRET": "@nextauth-secret",
+    "NEXTAUTH_URL": "@nextauth-url",
+    "COINGECKO_API_KEY": "@coingecko-api-key",
+    "NEXT_PUBLIC_VERCEL_ANALYTICS_ID": "@vercel-analytics-id",
+    "SENTRY_DSN": "@sentry-dsn",
+    "NEXT_PUBLIC_SENTRY_DSN": "@sentry-dsn-public",
+    "REDIS_URL": "@redis-url",
+    "OPENAI_API_KEY": "@openai-api-key"
+  },
+  "functions": {
+    "pages/api/**/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "regions": ["iad1", "fra1"],
+  "crons": [
+    {
+      "path": "/api/cron/update-portfolio",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/sync-prices",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
