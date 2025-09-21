@@ -8,17 +8,19 @@
   <p>
     <strong>Real-time portfolio tracking • AI-powered blockchain operations • Advanced analytics</strong>
   </p>
+  
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![MultiversX](https://img.shields.io/badge/MultiversX-23F7DD?logo=multiversx&logoColor=white)](https://multiversx.com/)
 
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://typescriptlang.org/)
-  [![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-  [![MultiversX](https://img.shields.io/badge/MultiversX-000000?logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMjIgMjJIMkwxMiAyWiIgZmlsbD0iI0ZGRkZGRiIvPgo8L3N2Zz4K&logoColor=white)](https://multiversx.com/)
 </div>
 
 ## ✨ Features
 
 ### 🎯 Core Functionality
+
 - **Real-time Portfolio Tracking** - Monitor your MultiversX assets with live price updates
 - **Multi-Wallet Support** - Manage multiple wallets from a single dashboard
 - **Token Management** - Track EGLD, ESDT tokens, and NFTs
@@ -26,18 +28,21 @@
 - **Portfolio Analytics** - Advanced charts and performance metrics
 
 ### 🤖 AI-Powered Features
+
 - **AI Assistant** - Natural language blockchain operations
 - **Smart Insights** - AI-generated portfolio recommendations
 - **Market Analysis** - Intelligent market trend predictions
 - **Risk Assessment** - Automated portfolio risk evaluation
 
 ### 📊 Advanced Analytics
+
 - **Performance Metrics** - ROI, P&L, and portfolio performance tracking
 - **Historical Data** - Long-term portfolio performance analysis
 - **Custom Dashboards** - Personalized analytics views
 - **Export Reports** - Generate detailed portfolio reports
 
 ### 🔧 Developer Features
+
 - **MultiversX SDK Integration** - Built with official MultiversX tools
 - **RESTful API** - Headless portfolio management
 - **Webhook Support** - Real-time transaction notifications
@@ -67,46 +72,46 @@
 ### Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Gzeu/mvx-portfolio-manager.git
-   cd mvx-portfolio-manager
-   ```
+```bash
+git clone https://github.com/Gzeu/mvx-portfolio-manager.git
+cd mvx-portfolio-manager
+```
 
 2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
 3. **Environment setup**
-   ```bash
-   cp .env.example .env.local
-   ```
-   
-   Configure your environment variables:
-   ```env
-   # MultiversX Network Configuration
-   NEXT_PUBLIC_MULTIVERSX_NETWORK=mainnet
-   NEXT_PUBLIC_MULTIVERSX_API_URL=https://api.multiversx.com
-   NEXT_PUBLIC_MULTIVERSX_GATEWAY_URL=https://gateway.multiversx.com
-   
-   # Database
-   DATABASE_URL="postgresql://user:password@localhost:5432/mvx_portfolio"
-   
-   # Authentication
-   NEXTAUTH_SECRET="your-nextauth-secret"
-   NEXTAUTH_URL="http://localhost:3000"
-   ```
+```bash
+cp .env.example .env.local
+```
+
+Configure your environment variables:
+```env
+# MultiversX Network Configuration
+NEXT_PUBLIC_MULTIVERSX_NETWORK=mainnet
+NEXT_PUBLIC_MULTIVERSX_API_URL=https://api.multiversx.com
+NEXT_PUBLIC_MULTIVERSX_GATEWAY_URL=https://gateway.multiversx.com
+
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/mvx_portfolio"
+
+# Authentication
+NEXTAUTH_SECRET="your-nextauth-secret"
+NEXTAUTH_URL="http://localhost:3000"
+```
 
 4. **Database setup**
-   ```bash
-   npx prisma migrate dev
-   npx prisma generate
-   ```
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
 
 5. **Start development server**
-   ```bash
-   npm run dev
-   ```
+```bash
+npm run dev
+```
 
 6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
@@ -157,6 +162,7 @@ Authorization: Bearer <your-jwt-token>
 ### Core Endpoints
 
 #### Get Portfolio Summary
+
 ```http
 GET /api/portfolio/summary
 ```
@@ -182,11 +188,13 @@ Response:
 ```
 
 #### Get Transaction History
+
 ```http
 GET /api/transactions?limit=50&offset=0
 ```
 
 #### AI Query
+
 ```http
 POST /api/ai/query
 Content-Type: application/json
@@ -216,7 +224,7 @@ NEXT_PUBLIC_MULTIVERSX_NETWORK=mainnet|devnet|testnet
 ### Supported Wallets
 
 - **MultiversX Web Wallet**
-- **MultiversX DeFi Wallet (Extension)**
+- **MultiversX DeFi Wallet** (Extension)
 - **Ledger Hardware Wallet**
 - **MultiversX Mobile Wallet** (via WalletConnect)
 - **xPortal Mobile App**
@@ -245,41 +253,41 @@ The platform supports:
 ### Transaction History
 *Comprehensive transaction tracking with filtering and export options*
 
-> 📸 **Screenshots coming soon!** This project is actively being developed.
+📸 Screenshots coming soon! This project is actively being developed.
 
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
 
-1. **Connect your repository to Vercel**
-2. **Configure environment variables** in Vercel dashboard
-3. **Deploy automatically** on every git push
+1. Connect your repository to Vercel
+2. Configure environment variables in Vercel dashboard
+3. Deploy automatically on every git push
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Gzeu/mvx-portfolio-manager)
 
 ### Docker
 
 1. **Build the image**
-   ```bash
-   docker build -t mvx-portfolio-manager .
-   ```
+```bash
+docker build -t mvx-portfolio-manager .
+```
 
 2. **Run the container**
-   ```bash
-   docker run -p 3000:3000 mvx-portfolio-manager
-   ```
+```bash
+docker run -p 3000:3000 mvx-portfolio-manager
+```
 
 ### Manual Deployment
 
 1. **Build for production**
-   ```bash
-   npm run build
-   ```
+```bash
+npm run build
+```
 
 2. **Start the application**
-   ```bash
-   npm start
-   ```
+```bash
+npm start
+```
 
 ## 🤝 Contributing
 
@@ -287,26 +295,26 @@ We welcome contributions from the community! Here's how you can help:
 
 ### Development Setup
 
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Make your changes**
-4. **Run tests**
-   ```bash
-   npm run test
-   npm run lint
-   ```
-5. **Commit your changes**
-   ```bash
-   git commit -m 'Add amazing feature'
-   ```
-6. **Push to your branch**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-7. **Open a Pull Request**
+1. Fork the repository
+2. Create a feature branch
+```bash
+git checkout -b feature/amazing-feature
+```
+3. Make your changes
+4. Run tests
+```bash
+npm run test
+npm run lint
+```
+5. Commit your changes
+```bash
+git commit -m 'Add amazing feature'
+```
+6. Push to your branch
+```bash
+git push origin feature/amazing-feature
+```
+7. Open a Pull Request
 
 ### Code Style
 
@@ -320,8 +328,8 @@ We welcome contributions from the community! Here's how you can help:
 
 Found a bug? Have a feature request?
 
-1. **Check existing issues** to avoid duplicates
-2. **Create a detailed issue** with:
+1. Check existing issues to avoid duplicates
+2. Create a detailed issue with:
    - Clear description
    - Steps to reproduce
    - Expected vs actual behavior
@@ -331,7 +339,6 @@ Found a bug? Have a feature request?
 ### Feature Requests
 
 We love new ideas! When requesting features:
-
 - **Describe the use case** clearly
 - **Explain the expected behavior**
 - **Consider the impact** on existing users
@@ -368,3 +375,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   <p><strong>Built with ❤️ for the MultiversX ecosystem</strong></p>
   <p>Made by <a href="https://github.com/Gzeu">@Gzeu</a> • Licensed under MIT</p>
 </div>
+
+🚀 Ready for deployment!
