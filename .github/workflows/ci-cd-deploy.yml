@@ -1,0 +1,403 @@
+name: 🚀 MultiversX Portfolio Manager CI/CD
+
+on:
+  push:
+    branches: [ main, develop, 'feature/*' ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly maintenance
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # 🧪 Code Quality & Testing
+  test:
+    name: 🧪 Test & Quality
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 21]
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🏗️ Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: 📦 Install Dependencies
+        run: npm ci
+        
+      - name: 🔍 Lint TypeScript
+        run: |
+          npm run lint
+          npm run type-check
+          
+      - name: 🧪 Run Unit Tests
+        run: npm run test:unit
+        
+      - name: 🧪 Run Integration Tests
+        run: npm run test:integration
+        env:
+          TEST_MNEMONIC: ${{ secrets.TEST_MNEMONIC }}
+          DEVNET_API_URL: https://devnet-api.multiversx.com
+          
+      - name: 📊 Upload Coverage
+        if: matrix.node-version == '20'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage
+          fail_ci_if_error: false
+
+  # 🔒 Security & Audit
+  security:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: 📦 Install Dependencies
+        run: npm ci
+        
+      - name: 🔍 Security Audit
+        run: |
+          npm audit --audit-level high
+          npx audit-ci --config audit-ci.json
+          
+      - name: 🛡️ CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript,typescript
+          
+      - name: 🔧 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        
+      - name: 🔍 Snyk Security Scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  # 🏗️ Build & Package
+  build:
+    name: 🏗️ Build Application
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: 📦 Install Dependencies
+        run: npm ci
+        
+      - name: 🏗️ Build Next.js Application
+        run: |
+          npm run build
+          npm run export
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          ANALYZE: false
+          
+      - name: 🔧 Build Storybook
+        run: npm run storybook:build
+        
+      - name: 📁 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-files-${{ github.sha }}
+          path: |
+            out/
+            storybook-static/
+            .next/
+          retention-days: 30
+          
+      - name: 📁 Upload Storybook
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-${{ github.sha }}
+          path: storybook-static/
+          retention-days: 7
+
+  # 🧪 E2E Testing with Playwright
+  e2e:
+    name: 🧪 E2E Tests
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: 📦 Install Dependencies
+        run: npm ci
+        
+      - name: 📁 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files-${{ github.sha }}
+          
+      - name: 🏕️ Install Playwright
+        run: npx playwright install --with-deps
+        
+      - name: 🧪 Run E2E Tests
+        run: npx playwright test
+        env:
+          BASE_URL: http://localhost:3000
+          TEST_WALLET_MNEMONIC: ${{ secrets.TEST_WALLET_MNEMONIC }}
+          
+      - name: 📁 Upload E2E Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-results-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # 🐳 Docker Build
+  docker:
+    name: 🐳 Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: [build, e2e]
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: 🔐 Login to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: 🏷️ Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            
+      - name: 📦 Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # 🌐 Deploy to Vercel
+  deploy-vercel:
+    name: 🌐 Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [docker]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 📁 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files-${{ github.sha }}
+          
+      - name: 🚀 Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
+
+  # 📚 Deploy Storybook
+  deploy-storybook:
+    name: 📚 Deploy Storybook
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 📁 Download Storybook
+        uses: actions/download-artifact@v4
+        with:
+          name: storybook-${{ github.sha }}
+          path: storybook-static/
+          
+      - name: 🚀 Deploy to Chromatic
+        uses: chromaui/action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          storybookBuildDir: storybook-static
+
+  # 🌍 Deploy to IPFS (Decentralized)
+  deploy-ipfs:
+    name: 🌍 Deploy to IPFS
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 📁 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files-${{ github.sha }}
+          
+      - name: 🌍 Deploy to IPFS
+        uses: aquiladev/ipfs-action@v0.3.1-alpha
+        id: ipfs
+        with:
+          path: ./out
+          service: pinata
+          pinataKey: ${{ secrets.PINATA_KEY }}
+          pinataSecret: ${{ secrets.PINATA_SECRET }}
+          
+      - name: 📄 Update DNS Record
+        run: |
+          echo "IPFS Hash: ${{ steps.ipfs.outputs.hash }}"
+          echo "IPFS URL: https://gateway.pinata.cloud/ipfs/${{ steps.ipfs.outputs.hash }}"
+          
+      - name: 💬 Comment IPFS URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🌍 **IPFS Preview Deployed**\n\nIPFS Hash: \`${{ steps.ipfs.outputs.hash }}\`\nPreview URL: https://gateway.pinata.cloud/ipfs/${{ steps.ipfs.outputs.hash }}`
+            })
+
+  # 📊 Performance Testing
+  performance:
+    name: 📊 Performance Tests
+    runs-on: ubuntu-latest
+    needs: deploy-vercel
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: 📦 Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+        
+      - name: 📊 Run Lighthouse CI
+        run: lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          LHCI_BUILD_CONTEXT__CURRENT_HASH: ${{ github.sha }}
+          
+      - name: 📁 Upload Performance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-${{ github.sha }}
+          path: .lighthouseci/
+          retention-days: 30
+
+  # 📱 Notifications
+  notify:
+    name: 📱 Notify Results
+    runs-on: ubuntu-latest
+    needs: [test, security, build, e2e, docker, deploy-vercel, deploy-storybook, deploy-ipfs, performance]
+    if: always()
+    
+    steps:
+      - name: 📱 Discord Notification
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: |
+            🚀 **MultiversX Portfolio Manager - Deployment Complete**
+            
+            🧪 Tests: ${{ needs.test.result }}
+            🔒 Security: ${{ needs.security.result }}
+            🏗️ Build: ${{ needs.build.result }}
+            🧪 E2E: ${{ needs.e2e.result }}
+            🐳 Docker: ${{ needs.docker.result }}
+            🌐 Vercel: ${{ needs.deploy-vercel.result }}
+            📚 Storybook: ${{ needs.deploy-storybook.result }}
+            🌍 IPFS: ${{ needs.deploy-ipfs.result }}
+            📊 Performance: ${{ needs.performance.result }}
+            
+            🔗 **Live App**: https://mvx-portfolio-manager.vercel.app
+            📚 **Storybook**: https://mvx-portfolio-storybook.chromatic.com
+            📊 **Analytics**: https://vercel.com/gzeu/mvx-portfolio-manager/analytics
+      
+      - name: 📧 Email Notification
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "🔴 MultiversX Portfolio Manager - CI/CD Failed"
+          body: |
+            The CI/CD pipeline failed for commit ${{ github.sha }}.
+            
+            Please check the GitHub Actions logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
